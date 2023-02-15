@@ -24,17 +24,15 @@ end
 net.Receive("HealthReset",function()
     ClientInit()
     print("Init completed")
-    PrintTable(LocalPlayer().parts)
 end)
 
 net.Receive("PartHurt",function(ply,len)
     local dmg = net.ReadFloat()
     local damagedPart = net.ReadInt(6)
     LocalPlayer().parts[damagedPart] = LocalPlayer().parts[damagedPart] - (dmg * 2)
-    PrintTable(LocalPlayer().parts)
 end)
 
-net.Receive("FatalPart",function(len,ply)
+net.Receive("FatalPartHurt",function(len,ply)
     local FataledPart = net.ReadInt(6)
     LocalPlayer().parts[FataledPart] = 0
 end)

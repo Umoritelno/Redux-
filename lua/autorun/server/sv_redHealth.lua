@@ -1,7 +1,7 @@
 local plym = FindMetaTable("Player")
 util.AddNetworkString("HealthReset")
 util.AddNetworkString("PartHurt")
-util.AddNetworkString("FatalPart")
+util.AddNetworkString("FatalPartHurt")
 
 function plym:ResetParts()
     self.parts = {
@@ -19,27 +19,65 @@ hook.Add("PlayerSpawn","Parts",function(ply)
     ply:ResetParts()
     net.Start("HealthReset")
     net.Send(ply)
-    PrintTable(ply.parts)
 end)
 
 hook.Add("EntityTakeDamage","PartsDamage",function(target,dmg)
-    print(dmg:GetDamage())
-    if target:IsPlayer() and IsValid(target) then
-        if dmg:IsBulletDamage() and target:LastHitGroup() != 0 and target.parts[target:LastHitGroup()] > (dmg:GetDamage() * 2) then
+    if target:IsPlayer() and IsValid(target) and target:LastHitGroup() != 0 then
+        if dmg:IsBulletDamage() then
+            if target.parts[target:LastHitGroup()] > (dmg:GetDamage() * 5) then 
             target.parts[target:LastHitGroup()] = target.parts[target:LastHitGroup()] - (dmg:GetDamage() * 2)
-            PrintTable(target.parts)
             net.Start("PartHurt")
             net.WriteFloat(dmg:GetDamage())
             net.WriteInt(target:LastHitGroup(),6)
             net.Send(target)
-        elseif dmg:IsBulletDamage() and target:LastHitGroup() != 1 and target.parts[target:LastHitGroup()] < (dmg:GetDamage() * 2) then 
+            elseif dmg:IsBulletDamage() and target.parts[target:LastHitGroup()] < (dmg:GetDamage() * 5) then 
             target.parts[target:LastHitGroup()] = 0
-            dmg:ScaleDamage(2)
             target:EmitSound("npc/combine_soldier/die3.wav")
-            net.Start("FatalPart")
+            net.Start("FatalPartHurt")
             net.WriteInt(target:LastHitGroup(),6)
             net.Send(target)
+            elseif dmg:IsBulletDamage() and target.parts[target:LastHitGroup()] == 0 then 
+            target:SetDamage(target:GetDamage() * 2)
+            end 
+        end 
+    end 
+    if target:IsPlayer() and IsValid(target) then 
+        if dmg:IsExplosionDamage() then 
+           for i = 2,3 do
+            if target.parts[i] > dmg:GetDamage() then
+                target.parts[i] = target.parts[i] - (dmg:GetDamage() * math.Rand(0.25,0.5))
+                net.Start("PartHurt")
+                net.WriteFloat(dmg:GetDamage() * math.Rand(0.25,0.5))
+                net.WriteInt(i,6)
+                net.Send(target)
+            elseif target.parts[i] <= dmg:GetDamage() then 
+                target.parts[i] = 0
+                target:EmitSound("npc/combine_soldier/die3.wav")
+                net.Start("FatalPartHurt")
+                net.WriteInt(i,6)
+                net.Send(target)
+             end
+           end
         end
-    end
+    end 
+    if target:IsPlayer() and IsValid(target) then 
+        if dmg:IsFallDamage() then
+            for i = 6,7 do
+                if target.parts[i] > dmg:GetDamage() then
+                    target.parts[i] = target.parts[i] - (dmg:GetDamage() * math.Rand(1,1.5))
+                    net.Start("PartHurt")
+                    net.WriteFloat(dmg:GetDamage() * math.Rand(1,1.5))
+                    net.WriteInt(i,6)
+                    net.Send(target)
+                elseif target.parts[i] <= dmg:GetDamage() then 
+                    target.parts[i] = 0
+                    target:EmitSound("npc/combine_soldier/die3.wav")
+                    net.Start("FatalPartHurt")
+                    net.WriteInt(i,6)
+                    net.Send(target)
+                 end
+            end
+        end
+    end 
 end)
 
